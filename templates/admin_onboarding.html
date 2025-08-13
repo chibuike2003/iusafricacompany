@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urofox Admin - Business Onboarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .sidebar-link.active {
+            background-color: #005f5f; /* Darker teal for active link */
+            color: #ffffff;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .table-header {
+            background-color: #e2e8f0; /* Light gray for table headers */
+            color: #4a5568; /* Darker gray text */
+        }
+        /* Custom styles for mobile sidebar */
+        .sidebar-mobile-open {
+            transform: translateX(0%);
+            opacity: 1;
+        }
+        .sidebar-mobile-closed {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .sidebar-mobile-closed {
+                transform: translateX(0%);
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+
+        /* Adjustments for smaller screens for table cells */
+        @media (max-width: 767px) {
+            .table-responsive-row {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 0.5rem;
+                padding: 0.75rem;
+                background-color: #ffffff;
+            }
+            .table-responsive-row td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px dashed #e2e8f0;
+            }
+            .table-responsive-row td:last-child {
+                border-bottom: none;
+            }
+            .table-responsive-row td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #4a5568;
+                flex-shrink: 0;
+                margin-right: 1rem;
+            }
+            .table-header {
+                display: none;
+            }
+            .table-responsive-row .actions-cell {
+                justify-content: flex-start;
+            }
+            .table-responsive-row .actions-cell::before {
+                content: "Actions:";
+            }
+        }
+
+        /* Modal specific styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="antialiased flex h-screen overflow-hidden">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden hidden"></div>
+
+    <aside id="sidebar" class="w-64 bg-gray-800 text-white flex flex-col p-4 shadow-lg fixed inset-y-0 left-0 z-50 transform sidebar-mobile-closed md:relative md:translate-x-0 transition-all duration-300 ease-in-out">
+        <div class="flex items-center mb-8">
+            <img src="../static/logo.jpg" alt="Urofox Logo" class="w-10 h-10 rounded-full mr-3">
+            <h2 class="text-2xl font-bold">Urofox Admin</h2>
+            <button id="close-sidebar" class="md:hidden ml-auto text-white focus:outline-none">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        <nav class="flex-grow overflow-y-auto">
+            <ul>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_users.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-users mr-3"></i> User Management
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_onboarding') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link active">
+                        <i class="fas fa-user-tie mr-3"></i> Business Onboarding
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_roles.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-user-tag mr-3"></i> Access Control & Roles
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_cms.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-edit mr-3"></i> Content Management
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_billing.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-credit-card mr-3"></i> Subscription & Billing
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_support.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-headset mr-3"></i> Customer Support
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_logs') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-clipboard-list mr-3"></i> Activity Logs
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_communication.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-paper-plane mr-3"></i> Communication Tools
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_settings.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-cogs mr-3"></i> System Settings
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_analytics.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-chart-bar mr-3"></i> Analytics & Reports
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-gray-700">
+            <a href="{{ url_for('admin_logout') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200">
+                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col md:ml-64 overflow-hidden">
+        <header class="header-gradient-bg text-white py-4 px-6 flex justify-between items-center shadow-md flex-shrink-0">
+            <button id="open-sidebar" class="md:hidden text-white focus:outline-none mr-4">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <h1 class="text-xl md:text-3xl font-bold">Business Onboarding Management</h1>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm md:text-lg hidden md:inline">Admin User</span>
+                <i class="fas fa-bell text-xl cursor-pointer hover:text-gray-200"></i>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for category, message in messages %}
+                            <div class="p-3 rounded-lg text-white {% if category == 'success' %}bg-green-500{% elif category == 'error' %}bg-red-500{% else %}bg-blue-500{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100 mb-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 space-y-4 md:space-y-0">
+                    <div class="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
+                        <input type="text" placeholder="Search businesses..." class="flex-grow w-full p-2 border rounded-lg focus:outline-none focus:border-teal-500 text-sm">
+                        <select class="p-2 border rounded-lg focus:outline-none focus:border-teal-500 w-full md:w-auto text-sm">
+                            <option value="">Filter by Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                            <option value="trial">Trial</option>
+                            <option value="active">Active</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
+                        <button id="downloadBusinessesBtn" class="bg-blue-600 text-white py-2 px-4 rounded-full hover:bg-blue-700 transition-colors duration-300 flex items-center justify-center w-full md:w-auto text-sm md:text-base">
+                            <i class="fas fa-download mr-2"></i> Download All
+                        </button>
+                        <button id="addBusinessBtn" class="bg-teal-600 text-white py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 flex items-center justify-center w-full md:w-auto text-sm md:text-base">
+                            <i class="fas fa-plus mr-2"></i> Add New Business
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white rounded-lg overflow-hidden" id="businessesTable">
+                        <thead>
+                            <tr class="table-header">
+                                <th class="py-3 px-4 text-left text-sm font-semibold">Business Name</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold">Contact Email</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold">Status</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold">Onboarding Agent</th>
+                                <th class="py-3 px-4 text-left text-sm font-semibold">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for business in businesses %}
+                            <tr class="border-b border-gray-200 hover:bg-gray-50 table-responsive-row">
+                                <td class="py-3 px-4" data-label="Business Name">{{ business.business_name }}</td>
+                                <td class="py-3 px-4" data-label="Contact Email">{{ business.contact_email }}</td>
+                                <td class="py-3 px-4" data-label="Status">
+                                    {# You might have a 'status' attribute on your Business model, or derive it #}
+                                    <span class="
+                                        {% if business.status == 'Approved (Trial)' %}bg-green-200 text-green-800
+                                        {% elif business.status == 'Rejected' %}bg-red-200 text-red-800
+                                        {% else %}bg-yellow-200 text-yellow-800{% endif %}
+                                        text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        {{ business.status if business.status else 'Pending' }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4" data-label="Onboarding Agent">{{ business.onboarding_agent if business.onboarding_agent else 'N/A' }}</td>
+                                <td class="py-3 px-4 flex space-x-2 actions-cell" data-label="Actions">
+                                    <button class="text-green-600 hover:text-green-800" title="Approve"><i class="fas fa-check-circle"></i></button>
+                                    <button class="text-red-600 hover:text-red-800" title="Reject"><i class="fas fa-times-circle"></i></button>
+                                    <button class="text-blue-600 hover:text-blue-800" title="Assign Agent"><i class="fas fa-user-plus"></i></button>
+                                    <button class="text-gray-600 hover:text-gray-800" title="View Details"><i class="fas fa-eye"></i></button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="py-4 px-4 text-center text-gray-500">No businesses onboarded yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="addBusinessModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Onboard New Business</h2>
+            <form action="{{ url_for('admin_onboarding') }}" method="POST" class="space-y-4">
+                <div>
+                    <label for="business_name" class="block text-sm font-medium text-gray-700">Business Name</label>
+                    <input type="text" id="business_name" name="business_name" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="contact_person" class="block text-sm font-medium text-gray-700">Contact Person</label>
+                    <input type="text" id="contact_person" name="contact_person" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="contact_email" class="block text-sm font-medium text-gray-700">Contact Email</label>
+                    <input type="email" id="contact_email" name="contact_email" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="phone_number" class="block text-sm font-medium text-gray-700">Phone Number (Optional)</label>
+                    <input type="text" id="phone_number" name="phone_number"
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="industry" class="block text-sm font-medium text-gray-700">Industry</label>
+                    <input type="text" id="industry" name="industry" required
+                           class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Notes (Optional)</label>
+                    <textarea id="notes" name="notes" rows="3"
+                              class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-teal-500 focus:border-teal-500 sm:text-sm"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancelBusinessBtn" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                        Cancel
+                    </button>
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-teal-600 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
+                        Submit Onboarding
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const openSidebarBtn = document.getElementById('open-sidebar');
+            const closeSidebarBtn = document.getElementById('close-sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const body = document.body;
+
+            // Modal elements
+            const addBusinessBtn = document.getElementById('addBusinessBtn');
+            const addBusinessModal = document.getElementById('addBusinessModal');
+            const closeButton = addBusinessModal.querySelector('.close-button');
+            const cancelBusinessBtn = document.getElementById('cancelBusinessBtn');
+
+            // Download button
+            const downloadBusinessesBtn = document.getElementById('downloadBusinessesBtn');
+
+            const openSidebar = () => {
+                sidebar.classList.remove('sidebar-mobile-closed');
+                sidebar.classList.add('sidebar-mobile-open');
+                sidebarOverlay.classList.remove('hidden');
+                body.classList.add('overflow-hidden');
+            };
+
+            const closeSidebar = () => {
+                sidebar.classList.remove('sidebar-mobile-open');
+                sidebar.classList.add('sidebar-mobile-closed');
+                sidebarOverlay.classList.add('hidden');
+                body.classList.remove('overflow-hidden');
+            };
+
+            // Sidebar Event Listeners
+            openSidebarBtn.addEventListener('click', openSidebar);
+            closeSidebarBtn.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar);
+
+            sidebar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 768) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) {
+                    sidebar.classList.remove('sidebar-mobile-closed', 'sidebar-mobile-open');
+                    sidebar.style.transform = 'translateX(0%)';
+                    sidebar.style.opacity = '1';
+                    sidebarOverlay.classList.add('hidden');
+                    body.classList.remove('overflow-hidden');
+                } else {
+                    if (!sidebar.classList.contains('sidebar-mobile-open') && !sidebar.classList.contains('sidebar-mobile-closed')) {
+                        sidebar.classList.add('sidebar-mobile-closed');
+                    }
+                }
+            });
+
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('sidebar-mobile-closed');
+            }
+
+            // Modal Event Listeners
+            addBusinessBtn.addEventListener('click', () => {
+                addBusinessModal.style.display = 'flex'; // Use flex to center
+                body.classList.add('overflow-hidden'); // Prevent scrolling when modal is open
+            });
+
+            closeButton.addEventListener('click', () => {
+                addBusinessModal.style.display = 'none';
+                body.classList.remove('overflow-hidden');
+            });
+
+            cancelBusinessBtn.addEventListener('click', () => {
+                addBusinessModal.style.display = 'none';
+                body.classList.remove('overflow-hidden');
+            });
+
+            // Close modal if clicked outside the content
+            window.addEventListener('click', (event) => {
+                if (event.target == addBusinessModal) {
+                    addBusinessModal.style.display = 'none';
+                    body.classList.remove('overflow-hidden');
+                }
+            });
+
+            // Handle flash messages display
+            const flashMessages = document.querySelectorAll('.p-3.rounded-lg.text-white');
+            flashMessages.forEach(messageDiv => {
+                setTimeout(() => {
+                    messageDiv.style.transition = 'opacity 0.5s ease-out';
+                    messageDiv.style.opacity = '0';
+                    setTimeout(() => messageDiv.remove(), 500); // Remove after transition
+                }, 5000); // Message disappears after 5 seconds
+            });
+
+            // --- Download Businesses Functionality ---
+            downloadBusinessesBtn.addEventListener('click', () => {
+                const table = document.getElementById('businessesTable');
+                let csv = [];
+                const rows = table.querySelectorAll('tr');
+
+                // Get headers
+                const headerCells = rows[0].querySelectorAll('th');
+                const headers = Array.from(headerCells).map(th => th.innerText.trim());
+                csv.push(headers.slice(0, 4).join(',')); // Exclude "Actions" column
+
+                // Get data rows
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    // Skip if it's the "No businesses onboarded yet" row
+                    if (row.cells.length === 1 && row.cells[0].getAttribute('colspan') === '5') {
+                        continue;
+                    }
+                    const rowData = [];
+                    // Get data from the first four columns (Business Name, Contact Email, Status, Onboarding Agent)
+                    for (let j = 0; j < 4; j++) {
+                        let cellData = row.cells[j].innerText.trim();
+                        // For the status, extract only the text content, removing extra whitespace
+                        if (j === 2) { // Assuming status is the 3rd column (index 2)
+                            const span = row.cells[j].querySelector('span');
+                            if (span) {
+                                cellData = span.innerText.trim();
+                            }
+                        }
+                        // Handle commas within cell data by enclosing in quotes
+                        if (cellData.includes(',')) {
+                            cellData = `"${cellData.replace(/"/g, '""')}"`;
+                        }
+                        rowData.push(cellData);
+                    }
+                    csv.push(rowData.join(','));
+                }
+
+                // Create a Blob and download it
+                const csvContent = csv.join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                if (link.download !== undefined) { // Feature detection for download attribute
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'onboarded_businesses.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    alert('Your browser does not support downloading files directly. Please copy the data manually.');
+                }
+            });
+            // --- End Download Businesses Functionality ---
+        });
+    </script>
+</body>
+</html>

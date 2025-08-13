@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urofox Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .sidebar-link.active {
+            background-color: #005f5f; /* Darker teal for active link */
+            color: #ffffff;
+        }
+        .card-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Custom styles for mobile sidebar */
+        /* These transitions ensure a smooth slide effect for the sidebar */
+        .sidebar-mobile-open {
+            transform: translateX(0%);
+            opacity: 1;
+        }
+        .sidebar-mobile-closed {
+            transform: translateX(-100%);
+            opacity: 0; /* Add opacity for a fade-out effect when closed */
+            pointer-events: none; /* Disable interactions when sidebar is hidden */
+        }
+        @media (min-width: 768px) { /* md breakpoint */
+            .sidebar-mobile-closed {
+                transform: translateX(0%); /* Always visible on larger screens */
+                opacity: 1; /* Always visible on larger screens */
+                pointer-events: auto; /* Enable interactions on larger screens */
+            }
+        }
+    </style>
+</head>
+<body class="antialiased flex h-screen overflow-hidden">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden hidden"></div>
+
+    <aside id="sidebar" class="w-64 bg-gray-800 text-white flex flex-col p-4 shadow-lg fixed inset-y-0 left-0 z-50 transform sidebar-mobile-closed md:relative md:translate-x-0 transition-all duration-300 ease-in-out">
+        <div class="flex items-center mb-8">
+            <img src="../static/logo.jpg" alt="Urofox Logo" class="w-10 h-10 rounded-full mr-3">
+            <h2 class="text-2xl font-bold">Urofox Admin</h2>
+            <button id="close-sidebar" class="md:hidden ml-auto text-white focus:outline-none">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        <nav class="flex-grow overflow-y-auto">
+            <ul>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_dashboard') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link active">
+                        <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_user_details') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-users mr-3"></i> User Management
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_onboarding') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-user-tie mr-3"></i> Business Onboarding
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_review_content') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-check-double mr-3"></i> Review Content
+                    </a>
+                </li>
+               
+                <li class="mb-2">
+                    <a href="admin_roles.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-user-tag mr-3"></i> Access Control & Roles
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_events') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-user-tag mr-3"></i> Post Events Pictures And videos
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_content_management') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-edit mr-3"></i> Content Management
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_billing.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-credit-card mr-3"></i> Subscription & Billing
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_support.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-headset mr-3"></i> Customer Support
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_logs') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-clipboard-list mr-3"></i> Activity Logs
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="{{ url_for('admin_communication_tools') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-paper-plane mr-3"></i> Communication Tools
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_settings.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-cogs mr-3"></i> System Settings
+                    </a>
+                </li>
+                <li class="mb-2">
+                    <a href="admin_analytics.html" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200 sidebar-link">
+                        <i class="fas fa-chart-bar mr-3"></i> Analytics & Reports
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        <div class="mt-auto pt-4 border-t border-gray-700">
+            <a href="{{ url_for('admin_logout') }}" class="flex items-center p-3 rounded-lg text-gray-200 hover:bg-teal-700 transition-colors duration-200">
+                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col md:ml-64 overflow-hidden">
+        <header class="header-gradient-bg text-white py-4 px-6 flex justify-between items-center shadow-md flex-shrink-0">
+            <button id="open-sidebar" class="md:hidden text-white focus:outline-none mr-4">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+            <h1 class="text-xl md:text-3xl font-bold">Welcome, {{ admin_name }}!</h1> {# Display welcome message #}
+            <div class="flex items-center space-x-4">
+                <span class="text-sm md:text-lg hidden md:inline">{{ admin_name }}</span>
+                <span class="text-sm md:text-lg hidden md:inline" id="current-datetime"></span> {# Placeholder for datetime #}
+                <i class="fas fa-bell text-xl cursor-pointer hover:text-gray-200"></i>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+                <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between mb-2 md:mb-3">
+                        <h3 class="text-md md:text-lg font-semibold text-gray-700">Total Users</h3>
+                        <i class="fas fa-users text-teal-600 text-xl md:text-2xl"></i>
+                    </div>
+                    <p class="text-3xl md:text-4xl font-bold text-gray-900">{{ total_users }}</p>
+                    <p class="text-xs md:text-sm text-gray-500 mt-1">+12% from last month</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between mb-2 md:mb-3">
+                        <h3 class="text-md md:text-lg font-semibold text-gray-700">Daily Logins</h3>
+                        <i class="fas fa-sign-in-alt text-teal-600 text-xl md:text-2xl"></i>
+                    </div>
+                    <p class="text-3xl md:text-4xl font-bold text-gray-900">{{ daily_logins }}</p>
+                    <p class="text-xs md:text-sm text-gray-500 mt-1">Steady activity</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between mb-2 md:mb-3">
+                        <h3 class="text-md md:text-lg font-semibold text-gray-700">Active Clients</h3>
+                        <i class="fas fa-user-check text-teal-600 text-xl md:text-2xl"></i>
+                    </div>
+                    <p class="text-3xl md:text-4xl font-bold text-gray-900">876</p>
+                    <p class="text-xs md:text-sm text-gray-500 mt-1">+8% from last week</p>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100 card-hover transition-all duration-300">
+                    <div class="flex items-center justify-between mb-2 md:mb-3">
+                        <h3 class="text-md md:text-lg font-semibold text-gray-700">Pending Tickets</h3>
+                        <i class="fas fa-ticket-alt text-teal-600 text-xl md:text-2xl"></i>
+                    </div>
+                    <p class="text-3xl md:text-4xl font-bold text-gray-900">{{ pending_tickets }}</p>
+                    <p class="text-xs md:text-sm text-gray-500 mt-1">Urgent attention needed</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-8">
+                <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4">User Activity Over Time (Last 7 Days)</h3>
+                    <div class="h-48 md:h-64 bg-gray-100 flex items-center justify-center text-gray-400 text-sm p-4">
+                        {% if user_activity_over_time %}
+                            <ul class="list-disc list-inside text-gray-700">
+                                {% for activity in user_activity_over_time %}
+                                    <li>{{ activity.date }}: {{ activity.logins }} logins</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>No user activity data available for the last 7 days.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4">Subscription Growth</h3>
+                    <div class="h-48 md:h-64 bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
+                        [Graph Placeholder: Subscription Growth]
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100 mb-8">
+                <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4">Admin To-Do List</h3>
+                <div class="flex flex-col sm:flex-row gap-2 mb-4">
+                    <input type="text" id="todo-input" placeholder="Add a new task..." class="flex-grow p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <button id="add-todo-btn" class="bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors duration-200">
+                        Add Task
+                    </button>
+                </div>
+                <ul id="todo-list" class="divide-y divide-gray-200">
+                    <!-- To-do items will be added here by JavaScript -->
+                </ul>
+            </div>
+
+
+            <div class="bg-white p-4 md:p-6 rounded-xl card-shadow border border-gray-100">
+                <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4">Recent Activities</h3>
+                <ul class="divide-y divide-gray-200">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                            <li class="py-2 md:py-3 flex flex-col md:flex-row justify-between items-start md:items-center">
+                                <span class="text-gray-700 text-sm md:text-base mb-1 md:mb-0">
+                                    <span class="font-medium">{{ activity.user_email or 'System' }}</span> {{ activity.action }}
+                                    {% if activity.details %}: {{ activity.details }}{% endif %}
+                                </span>
+                                <span class="text-gray-500 text-xs md:text-sm">
+                                    {{ activity.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    {% else %}
+                        <li class="py-2 md:py-3 text-gray-500 text-sm">No recent activities to display.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const openSidebarBtn = document.getElementById('open-sidebar');
+            const closeSidebarBtn = document.getElementById('close-sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            const body = document.body;
+            const currentDatetimeSpan = document.getElementById('current-datetime');
+
+            const updateDateTime = () => {
+                const now = new Date();
+                // Set timeZone to 'Africa/Lagos' for Lagos, Nigeria time
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    second: 'numeric',
+                    hour12: true,
+                    timeZone: 'Africa/Lagos' // Specify Lagos, Nigeria timezone
+                };
+                currentDatetimeSpan.textContent = now.toLocaleDateString('en-US', options);
+            };
+
+            // Update date and time initially and every second
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+
+            const openSidebar = () => {
+                sidebar.classList.remove('sidebar-mobile-closed');
+                sidebar.classList.add('sidebar-mobile-open');
+                sidebarOverlay.classList.remove('hidden');
+                body.classList.add('overflow-hidden'); // Prevent scrolling on body
+            };
+
+            const closeSidebar = () => {
+                sidebar.classList.remove('sidebar-mobile-open');
+                sidebar.classList.add('sidebar-mobile-closed');
+                sidebarOverlay.classList.add('hidden');
+                body.classList.remove('overflow-hidden'); // Re-enable scrolling on body
+            };
+
+            // Event Listeners
+            openSidebarBtn.addEventListener('click', openSidebar);
+            closeSidebarBtn.addEventListener('click', closeSidebar);
+            sidebarOverlay.addEventListener('click', closeSidebar); // Close sidebar when overlay is clicked
+
+            // Close sidebar if a link is clicked on mobile
+            sidebar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 768) { // Only close on mobile
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Handle resize events to ensure correct sidebar state on larger screens
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) {
+                    sidebar.classList.remove('sidebar-mobile-closed', 'sidebar-mobile-open');
+                    sidebar.style.transform = 'translateX(0%)'; // Ensure it's visible
+                    sidebar.style.opacity = '1'; // Ensure full opacity
+                    sidebarOverlay.classList.add('hidden');
+                    body.classList.remove('overflow-hidden');
+                } else {
+                    // When resizing to mobile, if sidebar was open, keep it open, otherwise closed
+                    if (!sidebar.classList.contains('sidebar-mobile-open') && !sidebar.classList.contains('sidebar-mobile-closed')) {
+                           sidebar.classList.add('sidebar-mobile-closed');
+                    }
+                }
+            });
+
+            // Initialize sidebar state on load based on screen size
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('sidebar-mobile-closed');
+            }
+
+            // To-Do List Functionality
+            const todoInput = document.getElementById('todo-input');
+            const addTodoBtn = document.getElementById('add-todo-btn');
+            const todoList = document.getElementById('todo-list');
+
+            // Load todos from localStorage
+            let todos = JSON.parse(localStorage.getItem('adminTodos')) || [];
+
+            const renderTodos = () => {
+                todoList.innerHTML = ''; // Clear existing list
+                todos.forEach((todo, index) => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'py-2 md:py-3 flex items-center justify-between';
+                    listItem.innerHTML = `
+                        <span class="text-gray-700 text-sm md:text-base ${todo.completed ? 'line-through text-gray-500' : ''}">${todo.text}</span>
+                        <div class="flex items-center space-x-2">
+                            <button class="toggle-todo text-teal-600 hover:text-teal-800 transition-colors duration-200" data-index="${index}">
+                                <i class="fas ${todo.completed ? 'fa-undo' : 'fa-check'}"></i>
+                            </button>
+                            <button class="delete-todo text-red-600 hover:text-red-800 transition-colors duration-200" data-index="${index}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    todoList.appendChild(listItem);
+                });
+            };
+
+            const addTodo = () => {
+                const todoText = todoInput.value.trim();
+                if (todoText) {
+                    todos.push({ text: todoText, completed: false });
+                    localStorage.setItem('adminTodos', JSON.stringify(todos));
+                    todoInput.value = ''; // Clear input
+                    renderTodos();
+                }
+            };
+
+            const toggleTodo = (index) => {
+                todos[index].completed = !todos[index].completed;
+                localStorage.setItem('adminTodos', JSON.stringify(todos));
+                renderTodos();
+            };
+
+            const deleteTodo = (index) => {
+                todos.splice(index, 1); // Remove item at index
+                localStorage.setItem('adminTodos', JSON.stringify(todos));
+                renderTodos();
+            };
+
+            addTodoBtn.addEventListener('click', addTodo);
+
+            todoInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTodo();
+                }
+            });
+
+            todoList.addEventListener('click', (e) => {
+                if (e.target.closest('.toggle-todo')) {
+                    const index = e.target.closest('.toggle-todo').dataset.index;
+                    toggleTodo(parseInt(index));
+                } else if (e.target.closest('.delete-todo')) {
+                    const index = e.target.closest('.delete-todo').dataset.index;
+                    deleteTodo(parseInt(index));
+                }
+            });
+
+            // Initial render of todos when the page loads
+            renderTodos();
+
+        });
+    </script>
+</body>
+</html>

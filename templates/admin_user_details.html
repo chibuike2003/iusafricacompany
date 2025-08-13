@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urofox Admin - User Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .table-card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        /* Modal specific styles */
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #fff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-height: 90vh; /* Limit height for scrollability */
+            overflow-y: auto; /* Enable scrolling for long forms */
+        }
+        .input-error {
+            border-color: #ef4444; /* Tailwind red-500 */
+        }
+        .error-message {
+            color: #ef4444; /* Tailwind red-500 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Header Section -->
+    <header class="header-gradient-bg text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <!-- Updated the href for the logo to redirect to admin_dashboard -->
+                <a href="{{ url_for('admin_dashboard') }}" class="flex items-center space-x-4">
+                    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="w-10 h-10 rounded-full shadow-md">
+                    <h1 class="text-2xl font-bold">Ius Africa Admin</h1>
+                </a>
+            </div>
+            <nav class="flex items-center space-x-4">
+                <span class="text-white text-lg font-medium">Welcome, {{ admin_name }}!</span>
+                <a href="{{ url_for('admin_dashboard') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md">Dashboard</a>
+                <a href="{{ url_for('admin_user_details') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600">User Details</a>
+                <a href="{{ url_for('admin_logout') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600">
+                    Logout <i class="fas fa-sign-out-alt ml-1"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-md text-sm {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <h2 class="text-4xl font-extrabold text-center mb-10 text-teal-800">Registered User Details</h2>
+
+        <div class="flex justify-end mb-6">
+            <button id="create-user-btn" class="bg-teal-600 text-white py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 flex items-center justify-center text-sm md:text-base">
+                <i class="fas fa-plus mr-2"></i> Create New User
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl table-card-shadow border border-gray-100 overflow-x-auto">
+            {% if users %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">State of Origin</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LGA</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residential Address</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile Pic</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered At</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user in users %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ user.id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.email }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.phone_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.state_of_origin }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.lga }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs overflow-hidden text-ellipsis">{{ user.residential_address }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {% if user.profile_picture_filename %}
+                                <img src="{{ url_for('static', filename='profile_pics/' + user.profile_picture_filename) }}" alt="Profile Pic" class="h-10 w-10 rounded-full object-cover">
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ user.registered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button class="edit-user-btn text-blue-600 hover:text-blue-800 mr-3"
+                                data-user-id="{{ user.id }}"
+                                data-full-name="{{ user.full_name }}"
+                                data-email="{{ user.email }}"
+                                data-phone-number="{{ user.phone_number }}"
+                                data-state-of-origin="{{ user.state_of_origin }}"
+                                data-lga="{{ user.lga }}"
+                                data-residential-address="{{ user.residential_address }}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button class="delete-user-btn text-red-600 hover:text-red-800" data-user-id="{{ user.id }}" data-user-name="{{ user.full_name }}">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center text-gray-600 py-4">No regular users registered yet.</p>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="header-gradient-bg text-white py-6 mt-auto shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+            <div class="flex justify-center space-x-6 mb-2">
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-facebook-f text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-linkedin-in text-2xl"></i>
+                </a>
+                <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-envelope text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Create User Modal -->
+    <div id="createUserModal" class="fixed inset-0 hidden modal-overlay">
+        <div class="relative w-full max-w-md p-6 modal-content">
+            <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-2xl font-bold text-center mb-6 text-teal-700">Create New User</h3>
+            <form id="createUserForm" method="POST" action="{{ url_for('admin_create_user') }}">
+                <div class="mb-4">
+                    <label for="modal-full-name" class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+                    <input type="text" id="modal-full-name" name="full-name" placeholder="John Doe"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="modal-full-name-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-email" class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+                    <input type="email" id="modal-email" name="email" placeholder="you@example.com"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="modal-email-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-phone-number" class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+                    <input type="tel" id="modal-phone-number" name="phone-number" placeholder="+234 801 234 5678"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="modal-phone-number-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-state-of-origin" class="block text-gray-700 text-sm font-semibold mb-2">State of Origin</label>
+                    <select id="modal-state-of-origin" name="state-of-origin"
+                            class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                        <option value="">Select your State</option>
+                        <option value="abia">Abia</option>
+                        <option value="adamawa">Adamawa</option>
+                        <option value="akwa-ibom">Akwa Ibom</option>
+                        <option value="anambra">Anambra</option>
+                        <option value="bauchi">Bauchi</option>
+                        <option value="bayelsa">Bayelsa</option>
+                        <option value="benue">Benue</option>
+                        <option value="borno">Borno</option>
+                        <option value="cross-river">Cross River</option>
+                        <option value="delta">Delta</option>
+                        <option value="ebonyi">Ebonyi</option>
+                        <option value="edo">Edo</option>
+                        <option value="ekiti">Ekiti</option>
+                        <option value="enugu">Enugu</option>
+                        <option value="gombe">Gombe</option>
+                        <option value="imo">Imo</option>
+                        <option value="jigawa">Jigawa</option>
+                        <option value="kaduna">Kaduna</option>
+                        <option value="kano">Kano</option>
+                        <option value="katsina">Katsina</option>
+                        <option value="kebbi">Kebbi</option>
+                        <option value="kogi">Kogi</option>
+                        <option value="kwara">Kwara</option>
+                        <option value="lagos">Lagos</option>
+                        <option value="nasarawa">Nasarawa</option>
+                        <option value="niger">Niger</option>
+                        <option value="ogun">Ogun</option>
+                        <option value="ondo">Ondo</option>
+                        <option value="osun">Osun</option>
+                        <option value="oyo">Oyo</option>
+                        <option value="plateau">Plateau</option>
+                        <option value="rivers">Rivers</option>
+                        <option value="sokoto">Sokoto</option>
+                        <option value="taraba">Taraba</option>
+                        <option value="yobe">Yobe</option>
+                        <option value="zamfara">Zamfara</option>
+                        <option value="fct">FCT</option>
+                    </select>
+                    <p id="modal-state-of-origin-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-lga" class="block text-gray-700 text-sm font-semibold mb-2">Local Government Area (LGA)</label>
+                    <input type="text" id="modal-lga" name="lga" placeholder="e.g., Abuja Municipal"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="modal-lga-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-residential-address" class="block text-gray-700 text-sm font-semibold mb-2">Residential Address</label>
+                    <textarea id="modal-residential-address" name="residential-address" rows="3" placeholder="Your full residential address"
+                              class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required></textarea>
+                    <p id="modal-residential-address-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="modal-password" class="block text-gray-700 text-sm font-semibold mb-2">Password</label>
+                    <input type="password" id="modal-password" name="password" placeholder="********"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="modal-password-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-6">
+                    <label for="modal-confirm-password" class="block text-gray-700 text-sm font-semibold mb-2">Confirm Password</label>
+                    <input type="password" id="modal-confirm-password" name="confirm-password" placeholder="********"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="modal-confirm-password-error" class="error-message hidden"></p>
+                </div>
+                <button type="submit"
+                        class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 focus:outline-none focus:shadow-outline">
+                    Create User <i class="fas fa-user-plus ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="fixed inset-0 hidden modal-overlay">
+        <div class="relative w-full max-w-md p-6 modal-content">
+            <button id="closeEditModalBtn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-2xl font-bold text-center mb-6 text-teal-700">Edit User Details</h3>
+            <form id="editUserForm" method="POST" action="">
+                <input type="hidden" id="edit-user-id" name="user_id">
+                <div class="mb-4">
+                    <label for="edit-full-name" class="block text-gray-700 text-sm font-semibold mb-2">Full Name</label>
+                    <input type="text" id="edit-full-name" name="full-name"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="edit-full-name-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-email" class="block text-gray-700 text-sm font-semibold mb-2">Email Address</label>
+                    <input type="email" id="edit-email" name="email"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="edit-email-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-phone-number" class="block text-gray-700 text-sm font-semibold mb-2">Phone Number</label>
+                    <input type="tel" id="edit-phone-number" name="phone-number"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="edit-phone-number-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-state-of-origin" class="block text-gray-700 text-sm font-semibold mb-2">State of Origin</label>
+                    <select id="edit-state-of-origin" name="state-of-origin"
+                            class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                        <option value="">Select your State</option>
+                        <option value="abia">Abia</option>
+                        <option value="adamawa">Adamawa</option>
+                        <option value="akwa-ibom">Akwa Ibom</option>
+                        <option value="anambra">Anambra</option>
+                        <option value="bauchi">Bauchi</option>
+                        <option value="bayelsa">Bayelsa</option>
+                        <option value="benue">Benue</option>
+                        <option value="borno">Borno</option>
+                        <option value="cross-river">Cross River</option>
+                        <option value="delta">Delta</option>
+                        <option value="ebonyi">Ebonyi</option>
+                        <option value="edo">Edo</option>
+                        <option value="ekiti">Ekiti</option>
+                        <option value="enugu">Enugu</option>
+                        <option value="gombe">Gombe</option>
+                        <option value="imo">Imo</option>
+                        <option value="jigawa">Jigawa</option>
+                        <option value="kaduna">Kaduna</option>
+                        <option value="kano">Kano</option>
+                        <option value="katsina">Katsina</option>
+                        <option value="kebbi">Kebbi</option>
+                        <option value="kogi">Kogi</soption>
+                        <option value="kwara">Kwara</option>
+                        <option value="lagos">Lagos</option>
+                        <option value="nasarawa">Nasarawa</option>
+                        <option value="niger">Niger</option>
+                        <option value="ogun">Ogun</option>
+                        <option value="ondo">Ondo</option>
+                        <option value="osun">Osun</option>
+                        <option value="oyo">Oyo</option>
+                        <option value="plateau">Plateau</option>
+                        <option value="rivers">Rivers</option>
+                        <option value="sokoto">Sokoto</option>
+                        <option value="taraba">Taraba</option>
+                        <option value="yobe">Yobe</option>
+                        <option value="zamfara">Zamfara</option>
+                        <option value="fct">FCT</option>
+                    </select>
+                    <p id="edit-state-of-origin-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-lga" class="block text-gray-700 text-sm font-semibold mb-2">Local Government Area (LGA)</label>
+                    <input type="text" id="edit-lga" name="lga"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                    <p id="edit-lga-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-residential-address" class="block text-gray-700 text-sm font-semibold mb-2">Residential Address</label>
+                    <textarea id="edit-residential-address" name="residential-address" rows="3"
+                              class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required></textarea>
+                    <p id="edit-residential-address-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-6">
+                    <label for="edit-password" class="block text-gray-700 text-sm font-semibold mb-2">New Password (optional)</label>
+                    <input type="password" id="edit-password" name="password" placeholder="Leave blank to keep current password"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500">
+                    <p id="edit-password-error" class="error-message hidden"></p>
+                </div>
+                <div class="mb-6">
+                    <label for="edit-confirm-password" class="block text-gray-700 text-sm font-semibold mb-2">Confirm New Password</label>
+                    <input type="password" id="edit-confirm-password" name="confirm-password" placeholder="Confirm new password"
+                           class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500">
+                    <p id="edit-confirm-password-error" class="error-message hidden"></p>
+                </div>
+                <button type="submit"
+                        class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-full hover:bg-blue-700 transition-colors duration-300 focus:outline-none focus:shadow-outline">
+                    Save Changes <i class="fas fa-save ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteUserModal" class="fixed inset-0 hidden modal-overlay">
+        <div class="relative w-full max-w-sm p-6 bg-white rounded-xl shadow-lg">
+            <button id="closeDeleteModalBtn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-2xl font-bold text-center mb-6 text-red-700">Confirm Deletion</h3>
+            <p class="text-gray-700 text-center mb-6">Are you sure you want to delete user "<span id="delete-user-name" class="font-semibold"></span>"? This action cannot be undone.</p>
+            <form id="deleteUserForm" method="POST" action="">
+                <input type="hidden" id="delete-user-id" name="user_id">
+                <div class="flex justify-center space-x-4">
+                    <button type="button" id="cancelDeleteBtn" class="bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full hover:bg-gray-400 transition-colors duration-300 focus:outline-none focus:shadow-outline">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-red-600 text-white font-bold py-2 px-4 rounded-full hover:bg-red-700 transition-colors duration-300 focus:outline-none focus:shadow-outline">
+                        Delete <i class="fas fa-trash-alt ml-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const createUserBtn = document.getElementById('create-user-btn');
+            const createUserModal = document.getElementById('createUserModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const createUserForm = document.getElementById('createUserForm');
+
+            const editUserModal = document.getElementById('editUserModal');
+            const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+            const editUserForm = document.getElementById('editUserForm');
+            const editUserIdInput = document.getElementById('edit-user-id');
+            const editFullNameInput = document.getElementById('edit-full-name');
+            const editEmailInput = document.getElementById('edit-email');
+            const editPhoneInput = document.getElementById('edit-phone-number');
+            const editStateOfOriginSelect = document.getElementById('edit-state-of-origin');
+            const editLgaInput = document.getElementById('edit-lga');
+            const editResidentialAddressInput = document.getElementById('edit-residential-address');
+            const editPasswordInput = document.getElementById('edit-password');
+            const editConfirmPasswordInput = document.getElementById('edit-confirm-password');
+
+            const deleteUserModal = document.getElementById('deleteUserModal');
+            const closeDeleteModalBtn = document.getElementById('closeDeleteModalBtn');
+            const deleteUserForm = document.getElementById('deleteUserForm');
+            const deleteUserIdInput = document.getElementById('delete-user-id');
+            const deleteUserNameSpan = document.getElementById('delete-user-name');
+            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+
+
+            // Form fields and their error message elements for Create User Modal
+            const fullNameInput = document.getElementById('modal-full-name');
+            const emailInput = document.getElementById('modal-email');
+            const phoneInput = document.getElementById('modal-phone-number');
+            const stateOfOriginSelect = document.getElementById('modal-state-of-origin');
+            const lgaInput = document.getElementById('modal-lga');
+            const residentialAddressInput = document.getElementById('modal-residential-address');
+            const passwordInput = document.getElementById('modal-password');
+            const confirmPasswordInput = document.getElementById('modal-confirm-password');
+
+            const fullNameError = document.getElementById('modal-full-name-error');
+            const emailError = document.getElementById('modal-email-error');
+            const phoneError = document.getElementById('modal-phone-number-error');
+            const stateOfOriginError = document.getElementById('modal-state-of-origin-error');
+            const lgaError = document.getElementById('modal-lga-error');
+            const residentialAddressError = document.getElementById('modal-residential-address-error');
+            const passwordError = document.getElementById('modal-password-error');
+            const confirmPasswordError = document.getElementById('modal-confirm-password-error');
+
+            // Error message elements for Edit User Modal
+            const editFullNameError = document.getElementById('edit-full-name-error');
+            const editEmailError = document.getElementById('edit-email-error');
+            const editPhoneError = document.getElementById('edit-phone-number-error');
+            const editStateOfOriginError = document.getElementById('edit-state-of-origin-error');
+            const editLgaError = document.getElementById('edit-lga-error');
+            const editResidentialAddressError = document.getElementById('edit-residential-address-error');
+            const editPasswordError = document.getElementById('edit-password-error');
+            const editConfirmPasswordError = document.getElementById('edit-confirm-password-error');
+
+
+            function showError(inputElement, messageElement, message) {
+                messageElement.textContent = message;
+                messageElement.classList.remove('hidden');
+                inputElement.classList.add('input-error');
+            }
+
+            function hideError(inputElement, messageElement) {
+                messageElement.classList.add('hidden');
+                inputElement.classList.remove('input-error');
+            }
+
+            // Open Create User modal
+            createUserBtn.addEventListener('click', () => {
+                createUserModal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden'); // Prevent scrolling
+            });
+
+            // Close Create User modal
+            closeModalBtn.addEventListener('click', () => {
+                createUserModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden'); // Re-enable scrolling
+                createUserForm.reset(); // Clear the form
+                // Hide all error messages when modal closes
+                [fullNameInput, emailInput, phoneInput, stateOfOriginSelect, lgaInput, residentialAddressInput, passwordInput, confirmPasswordInput].forEach(input => {
+                    input.classList.remove('input-error');
+                });
+                [fullNameError, emailError, phoneError, stateOfOriginError, lgaError, residentialAddressError, passwordError, confirmPasswordError].forEach(error => {
+                    error.classList.add('hidden');
+                });
+            });
+
+            // Open Edit User modal
+            document.querySelectorAll('.edit-user-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const userId = event.currentTarget.dataset.userId;
+                    const fullName = event.currentTarget.dataset.fullName;
+                    const email = event.currentTarget.dataset.email;
+                    const phoneNumber = event.currentTarget.dataset.phoneNumber;
+                    const stateOfOrigin = event.currentTarget.dataset.stateOfOrigin;
+                    const lga = event.currentTarget.dataset.lga;
+                    const residentialAddress = event.currentTarget.dataset.residentialAddress;
+
+                    editUserIdInput.value = userId;
+                    editFullNameInput.value = fullName;
+                    editEmailInput.value = email;
+                    editPhoneInput.value = phoneNumber;
+                    editStateOfOriginSelect.value = stateOfOrigin;
+                    editLgaInput.value = lga;
+                    editResidentialAddressInput.value = residentialAddress;
+                    editPasswordInput.value = ''; // Clear password fields
+                    editConfirmPasswordInput.value = ''; // Clear password fields
+
+                    // Set the form action dynamically
+                    editUserForm.action = `{{ url_for('admin_edit_user', user_id=0) }}`.replace('0', userId);
+
+                    editUserModal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                });
+            });
+
+            // Close Edit User modal
+            closeEditModalBtn.addEventListener('click', () => {
+                editUserModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                editUserForm.reset(); // Clear the form
+                // Hide all error messages when modal closes
+                [editFullNameInput, editEmailInput, editPhoneInput, editStateOfOriginSelect, editLgaInput, editResidentialAddressInput, editPasswordInput, editConfirmPasswordInput].forEach(input => {
+                    input.classList.remove('input-error');
+                });
+                [editFullNameError, editEmailError, editPhoneError, editStateOfOriginError, editLgaError, editResidentialAddressError, editPasswordError, editConfirmPasswordError].forEach(error => {
+                    error.classList.add('hidden');
+                });
+            });
+
+            // Open Delete Confirmation modal
+            document.querySelectorAll('.delete-user-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const userId = event.currentTarget.dataset.userId;
+                    const userName = event.currentTarget.dataset.userName;
+
+                    deleteUserIdInput.value = userId;
+                    deleteUserNameSpan.textContent = userName;
+
+                    // Set the form action dynamically
+                    deleteUserForm.action = `{{ url_for('admin_delete_user', user_id=0) }}`.replace('0', userId);
+
+                    deleteUserModal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                });
+            });
+
+            // Close Delete Confirmation modal
+            closeDeleteModalBtn.addEventListener('click', () => {
+                deleteUserModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+
+            // Cancel Delete button in modal
+            cancelDeleteBtn.addEventListener('click', () => {
+                deleteUserModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+
+
+            // Client-side validation for Create User modal form
+            createUserForm.addEventListener('submit', function(event) {
+                let isValid = true;
+
+                // Full Name Validation
+                if (fullNameInput.value.trim() === '') {
+                    showError(fullNameInput, fullNameError, 'Full name is required.');
+                    isValid = false;
+                } else {
+                    hideError(fullNameInput, fullNameError);
+                }
+
+                // Email Validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailInput.value.trim())) {
+                    showError(emailInput, emailError, 'Please enter a valid email address.');
+                    isValid = false;
+                } else {
+                    hideError(emailInput, emailError);
+                }
+
+                // Phone Number Validation (basic check for 10-15 digits, allows +, spaces, and numbers)
+                const phoneRegex = /^\+?[\d\s]{10,15}$/;
+                if (!phoneRegex.test(phoneInput.value.trim())) {
+                    showError(phoneInput, phoneError, 'Please enter a valid 10-15 digit phone number (e.g., 08012345678 or +234...).');
+                    isValid = false;
+                } else {
+                    hideError(phoneInput, phoneError);
+                }
+
+                // State of Origin Validation
+                if (stateOfOriginSelect.value === '') {
+                    showError(stateOfOriginSelect, stateOfOriginError, 'Please select a state of origin.');
+                    isValid = false;
+                } else {
+                    hideError(stateOfOriginSelect, stateOfOriginError);
+                }
+
+                // LGA Validation
+                if (lgaInput.value.trim() === '') {
+                    showError(lgaInput, lgaError, 'Local Government Area is required.');
+                    isValid = false;
+                } else {
+                    hideError(lgaInput, lgaError);
+                }
+
+                // Residential Address Validation
+                if (residentialAddressInput.value.trim() === '') {
+                    showError(residentialAddressInput, residentialAddressError, 'Residential address is required.');
+                    isValid = false;
+                } else {
+                    hideError(residentialAddressInput, residentialAddressError);
+                }
+
+                // Password Validation (at least 8 characters, one number, one special character)
+                const password = passwordInput.value;
+                const passwordRegex = /^(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/;
+                if (!passwordRegex.test(password)) {
+                    showError(passwordInput, passwordError, 'Password must be at least 8 characters long and include a number and a special character.');
+                    isValid = false;
+                } else {
+                    hideError(passwordInput, passwordError);
+                }
+
+                // Confirm Password Validation
+                if (confirmPasswordInput.value !== password) {
+                    showError(confirmPasswordInput, confirmPasswordError, 'Passwords do not match.');
+                    isValid = false;
+                } else {
+                    hideError(confirmPasswordInput, confirmPasswordError);
+                }
+
+                if (!isValid) {
+                    event.preventDefault(); // Prevent form submission if validation fails
+                }
+            });
+
+            // Client-side validation for Edit User modal form
+            editUserForm.addEventListener('submit', function(event) {
+                let isValid = true;
+
+                // Full Name Validation
+                if (editFullNameInput.value.trim() === '') {
+                    showError(editFullNameInput, editFullNameError, 'Full name is required.');
+                    isValid = false;
+                } else {
+                    hideError(editFullNameInput, editFullNameError);
+                }
+
+                // Email Validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(editEmailInput.value.trim())) {
+                    showError(editEmailInput, editEmailError, 'Please enter a valid email address.');
+                    isValid = false;
+                } else {
+                    hideError(editEmailInput, editEmailError);
+                }
+
+                // Phone Number Validation (basic check for 10-15 digits, allows +, spaces, and numbers)
+                const phoneRegex = /^\+?[\d\s]{10,15}$/;
+                if (!phoneRegex.test(editPhoneInput.value.trim())) {
+                    showError(editPhoneInput, editPhoneError, 'Please enter a valid 10-15 digit phone number (e.g., 08012345678 or +234...).');
+                    isValid = false;
+                } else {
+                    hideError(editPhoneInput, editPhoneError);
+                }
+
+                // State of Origin Validation
+                if (editStateOfOriginSelect.value === '') {
+                    showError(editStateOfOriginSelect, editStateOfOriginError, 'Please select a state of origin.');
+                    isValid = false;
+                } else {
+                    hideError(editStateOfOriginSelect, editStateOfOriginError);
+                }
+
+                // LGA Validation
+                if (editLgaInput.value.trim() === '') {
+                    showError(editLgaInput, editLgaError, 'Local Government Area is required.');
+                    isValid = false;
+                } else {
+                    hideError(editLgaInput, editLgaError);
+                }
+
+                // Residential Address Validation
+                if (editResidentialAddressInput.value.trim() === '') {
+                    showError(editResidentialAddressInput, editResidentialAddressError, 'Residential address is required.');
+                    isValid = false;
+                } else {
+                    hideError(editResidentialAddressInput, editResidentialAddressError);
+                }
+
+                // Password Validation (only if new password is provided)
+                const newPassword = editPasswordInput.value;
+                const confirmNewPassword = editConfirmPasswordInput.value;
+                const passwordRegex = /^(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/;
+
+                if (newPassword.trim() !== '') { // Only validate if a new password is entered
+                    if (!passwordRegex.test(newPassword)) {
+                        showError(editPasswordInput, editPasswordError, 'New password must be at least 8 characters long and include a number and a special character.');
+                        isValid = false;
+                    } else {
+                        hideError(editPasswordInput, editPasswordError);
+                    }
+
+                    if (confirmNewPassword !== newPassword) {
+                        showError(editConfirmPasswordInput, editConfirmPasswordError, 'New passwords do not match.');
+                        isValid = false;
+                    } else {
+                        hideError(editConfirmPasswordInput, editConfirmPasswordError);
+                    }
+                } else { // If no new password, clear any errors related to password fields
+                    hideError(editPasswordInput, editPasswordError);
+                    hideError(editConfirmPasswordInput, editConfirmPasswordError);
+                }
+
+
+                if (!isValid) {
+                    event.preventDefault(); // Prevent form submission if validation fails
+                }
+            });
+        });
+    </script>
+</body>
+</html>

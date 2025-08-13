@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ius Africa - Unlocking Potential, Building a Better Tomorrow</title>
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='logo.jpg') }}" type="image/jpeg">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for dark teal theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff; /* White background */
+            color: #1a202c; /* Dark text for contrast */
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
+            position: relative; /* Needed for video positioning */
+        }
+        .gradient-bg {
+            /* Teal to darker teal gradient - kept for footer and splash screen */
+            background: linear-gradient(to right, #008080, #005f5f); /* Common Teal to a slightly darker teal */
+            background-size: 200% 200%; /* Make gradient larger than element */
+            animation: gradientShift 15s ease infinite alternate; /* Continuous, non-ending animation */
+        }
+        .text-gradient {
+            /* Teal to darker teal text gradient */
+            background: linear-gradient(to right, #008080, #005f5f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Keyframe for gradient background shift */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Keyframe for subtle floating effect on cards */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Apply float animation to focus area cards */
+        .focus-card {
+            animation: float 4s ease-in-out infinite; /* Slower, smoother float */
+        }
+
+        /* Keyframe for button pulse effect */
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+            50% { transform: scale(1.02); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2); }
+            100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        }
+
+        /* Apply pulse animation to the join us button */
+        .join-us-button {
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        /* Add a subtle hover effect for cards */
+        .focus-card:hover {
+            transform: translateY(-8px); /* Slightly more lift on hover */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+            animation-play-state: paused; /* Pause floating animation on hover */
+        }
+
+        /* Keyframe for logo rotation */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Apply rotation animation to the logo */
+        .rotating-logo {
+            animation: rotate 10s linear infinite; /* Continuous, steady rotation */
+        }
+
+        /* Splash Screen Styles */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right, #008080, #005f5f); /* Match header gradient */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; /* Ensure it's on top */
+            color: white;
+            opacity: 1;
+            transition: opacity 1s ease-out; /* Fade out effect */
+        }
+
+        #splash-screen.fade-out {
+            opacity: 0;
+            pointer-events: none; /* Disable interaction after fade out */
+        }
+
+        #splash-screen .splash-logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            animation: fadeInScale 1.5s ease-out forwards; /* Fade in and scale */
+        }
+
+        #splash-screen .splash-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            opacity: 0; /* Hidden initially */
+            animation: fadeInUp 1s ease-out 0.5s forwards; /* Fade in and slide up after logo */
+        }
+
+        #splash-screen .splash-subtitle {
+            font-size: 1.5rem;
+            opacity: 0; /* Hidden initially */
+            animation: fadeInUp 1s ease-out 1s forwards; /* Fade in and slide up after title */
+        }
+
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .main-content {
+            opacity: 0; /* Hidden initially */
+            transition: opacity 1s ease-in; /* Fade in effect */
+        }
+
+        .main-content.visible {
+            opacity: 1;
+        }
+
+        /* Background Video Styles */
+        #background-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -2; /* Behind all content, but above the body background */
+            background-size: cover; /* Ensures video covers the entire area */
+            filter: brightness(60%); /* Darken the video for better text readability */
+        }
+
+        /* Overlay for video to ensure text readability */
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); /* Semi-transparent dark overlay */
+            z-index: -1; /* Above video, below content */
+        }
+
+        /* Header with logo background */
+        .header-bg-logo {
+            background-image: url('{{ url_for('static', filename='logo.jpg') }}');
+            background-size: cover; /* Cover the entire header area */
+            background-position: center; /* Center the image */
+            background-repeat: no-repeat; /* Do not repeat the image */
+            position: relative; /* For the overlay */
+        }
+
+        /* Overlay for the header background image */
+        .header-bg-logo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Dark overlay for text readability */
+            z-index: 0; /* Below content, above background image */
+        }
+
+        /* Ensure content inside header is above the overlay */
+        .header-bg-logo > div {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Ensure all main content is above the video and its overlay */
+        .container, footer {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Background Video -->
+    <video autoplay loop muted playsinline id="background-video">
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-city-traffic-at-night-5136-large.mp4" type="video/mp4">
+        <!-- Fallback for browsers that do not support the video tag -->
+        Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay"></div>
+
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+        <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="splash-logo">
+        <h1 class="splash-title">Ius Africa</h1>
+        <p class="splash-subtitle">Unlocking Potential, Building a Better Tomorrow</p>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div id="main-content-wrapper" class="main-content">
+        <!-- Header/Hero Section -->
+        <header class="header-bg-logo text-white py-16 md:py-24 rounded-b-3xl shadow-lg">
+            <div class="container mx-auto px-4 text-center">
+                <!-- Logo/Name -->
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="mx-auto mb-6 rotating-logo rounded-full shadow-md w-20 h-20">
+                <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">
+                    Ius Africa
+                </h1>
+                <p class="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto">
+                    Unlocking Potential, Building a Better Tomorrow
+                </p>
+                <p class="text-lg md:text-xl opacity-80 max-w-4xl mx-auto">
+                    Finding innovative solutions to pressing social issues, driven by our vision of positive social change.
+                </p>
+                <!-- Login and Signup Buttons -->
+                <div class="mt-8 flex justify-center space-x-4">
+                    {% if session.get('user_logged_in') %}
+                    <a href="{{ url_for('user_dashboard') }}" class="bg-white text-teal-600 font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-gray-100 transition-colors duration-300">
+                        Go to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('user_signup') }}" class="bg-white text-teal-600 font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-gray-100 transition-colors duration-300">
+                        Sign Up
+                    </a>
+                    <a href="{{ url_for('user_login') }}" class="border border-white text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-white hover:text-teal-600 transition-colors duration-300">
+                        Login
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <main class="container mx-auto px-4 py-12 md:py-20">
+
+            <!-- About Section -->
+            <section id="about" class="mb-16 md:mb-24">
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
+                    <h2 class="text-4xl font-bold text-center mb-6 text-gradient">About Ius Africa</h2>
+                    <p class="text-lg md:text-xl leading-relaxed text-gray-700 text-center max-w-3xl mx-auto">
+                        Ius Africa is a dynamic organization driven by a shared vision of fostering positive social change. Our name, <span class="font-semibold text-teal-600">"Ius," derived from Latin, translates to "elixir"</span> – symbolizing our mission to find innovative solutions to pressing social issues.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Focus Areas Section -->
+            <section id="focus-areas" class="mb-16 md:mb-24">
+                <h2 class="text-4xl font-bold text-center mb-10 text-gradient">Our Focus Areas</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Leadership Development -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 focus-card">
+                        <div class="text-teal-600 text-5xl mb-4 text-center">
+                            <i class="fas fa-users-gear"></i> <!-- Users with gear icon -->
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-3 text-center">Leadership Development</h3>
+                        <p class="text-gray-600 text-center">Cultivating visionary leaders who drive change.</p>
+                    </div>
+
+                    <!-- Business Development and Management -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 focus-card" style="animation-delay: 0.2s;">
+                        <div class="text-teal-600 text-5xl mb-4 text-center">
+                            <i class="fas fa-chart-line"></i> <!-- Chart line icon -->
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-3 text-center">Business Development & Management</h3>
+                        <p class="text-gray-600 text-center">Supporting entrepreneurship and sustainable business practices.</p>
+                    </div>
+
+                    <!-- Financial Intelligence -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 focus-card" style="animation-delay: 0.4s;">
+                        <div class="text-teal-600 text-5xl mb-4 text-center">
+                            <i class="fas fa-wallet"></i> <!-- Wallet icon -->
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-3 text-center">Financial Intelligence</h3>
+                        <p class="text-gray-600 text-center">Enhancing financial literacy and management.</p>
+                    </div>
+
+                    <!-- Professional Development -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 focus-card" style="animation-delay: 0.6s;">
+                        <div class="text-teal-600 text-5xl mb-4 text-center">
+                            <i class="fas fa-briefcase"></i> <!-- Briefcase icon -->
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-3 text-center">Professional Development</h3>
+                        <p class="text-gray-600 text-center">Equipping individuals with skills for personal and professional growth.</p>
+                    </div>
+
+                    <!-- Design Thinking -->
+                    <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100 focus-card" style="animation-delay: 0.8s;">
+                        <div class="text-teal-600 text-5xl mb-4 text-center">
+                            <i class="fas fa-lightbulb"></i> <!-- Lightbulb icon -->
+                        </div>
+                        <h3 class="text-2xl font-semibold text-gray-800 mb-3 text-center">Design Thinking</h3>
+                        <p class="text-gray-600 text-center">Applying creative problem-solving approaches to social challenges.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Belief Section -->
+            <section id="belief" class="mb-16 md:mb-24">
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
+                    <h2 class="text-4xl font-bold text-center mb-6 text-gradient">Our Belief</h2>
+                    <p class="text-lg md:text-xl leading-relaxed text-gray-700 text-center max-w-3xl mx-auto">
+                        We believe in the transformative power of well-equipped youth and their role in shaping a brighter future for our society. At Ius Africa, we're committed to nurturing a new generation of leaders and change-makers who will drive meaningful impact and create lasting solutions.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Mission Statement Section -->
+            <section id="mission" class="mb-16 md:mb-24">
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
+                    <h2 class="text-4xl font-bold text-center mb-6 text-gradient">Our Mission</h2>
+                    <p class="text-lg md:text-xl leading-relaxed text-gray-700 text-center max-w-3xl mx-auto">
+                        To empower youth and communities through transformative leadership, entrepreneurship, financial intelligence, and professional development, using innovative, human-centered approaches to address pressing social challenges across Africa.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Vision Statement Section -->
+            <section id="vision" class="mb-16 md:mb-24">
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
+                    <h2 class="text-4xl font-bold text-center mb-6 text-gradient">Our Vision</h2>
+                    <p class="text-lg md:text-xl leading-relaxed text-gray-700 text-center max-w-3xl mx-auto">
+                        To build a generation of visionary African leaders and change-makers equipped to drive sustainable development and create lasting social impact.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Latest Blog Posts Section -->
+            <section id="latest-blog-posts" class="mb-16 md:mb-24">
+                <h2 class="text-4xl font-bold text-center mb-10 text-gradient">Latest Blog Posts</h2>
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
+                    {% if recent_blog_posts %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {% for post in recent_blog_posts %}
+                                <div class="border border-gray-200 rounded-lg p-6 flex flex-col justify-between h-full hover:shadow-md transition-shadow duration-300">
+                                    <div>
+                                        <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ post.title }}</h3>
+                                        <p class="text-gray-600 text-sm mb-3">By {{ post.user_name }} on {{ post.created_at.strftime('%B %d, %Y') }}</p>
+                                        <p class="text-gray-700 mb-4">{{ post.content[:150] }}...</p>
+                                    </div>
+                                    <div class="mt-auto">
+                                        <a href="{{ url_for('user_all_blog_posts') }}" class="text-teal-500 hover:underline text-sm">Read More <i class="fas fa-arrow-right ml-1"></i></a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-8">
+                            <a href="{{ url_for('user_all_blog_posts') }}" class="bg-teal-600 text-white py-3 px-6 rounded-full hover:bg-teal-700 transition-colors duration-300 inline-flex items-center">
+                                View All Blog Posts <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-gray-600 py-8">No blog posts published yet. Check back soon!</p>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Community Testimonials Section -->
+            <section id="community-testimonials" class="mb-16 md:mb-24">
+                <h2 class="text-4xl font-bold text-center mb-10 text-gradient">What Our Community Says</h2>
+                <div class="bg-white p-8 md:p-12 rounded-2xl shadow-xl border border-gray-100">
+                    {% if approved_testimonials %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {% for testimonial in approved_testimonials %}
+                                <div class="border border-gray-200 rounded-lg p-6 flex flex-col justify-between h-full hover:shadow-md transition-shadow duration-300">
+                                    <div>
+                                        <p class="text-lg italic text-gray-700 mb-4 leading-relaxed">
+                                            “{{ testimonial.testimonial_text }}”
+                                        </p>
+                                    </div>
+                                    <div class="text-right mt-auto">
+                                        <p class="font-semibold text-teal-600">– {{ testimonial.user_name }}</p>
+                                        <p class="text-gray-500 text-sm">{{ testimonial.submitted_at.strftime('%B %d, %Y') }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="text-center mt-8">
+                            <a href="{{ url_for('user_all_testimonials') }}" class="bg-teal-600 text-white py-3 px-6 rounded-full hover:bg-teal-700 transition-colors duration-300 inline-flex items-center">
+                                View All Testimonials <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-center text-gray-600 py-8">No testimonials approved yet. Be the first to share your experience!</p>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Join Us / Launch Section -->
+            <section id="join-us" class="text-center bg-teal-50 p-10 md:p-16 rounded-2xl shadow-lg border border-teal-100">
+                <h2 class="text-4xl font-bold mb-6 text-teal-700">Join Us!</h2>
+                <p class="text-lg md:text-xl text-teal-600 mb-8 max-w-3xl mx-auto">
+                    We are excited to announce our full launch soon in UNN! Be part of our growing community and receive your exclusive Ius Africa T-shirt.
+                </p>
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer"
+                   class="inline-block bg-gradient-to-r from-teal-500 to-teal-700 text-white text-xl font-semibold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out join-us-button">
+                    Connect with Us <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="gradient-bg text-white py-10 md:py-12 mt-16 rounded-t-3xl shadow-inner">
+            <div class="container mx-auto px-4 text-center">
+                <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+                <div class="flex justify-center space-x-6 mb-6">
+                    <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                        <i class="fab fa-facebook-f text-3xl"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                        <i class="fab fa-linkedin-in text-3xl"></i>
+                    </a>
+                    <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                        <i class="fas fa-envelope text-3xl"></i>
+                    </a>
+                </div>
+                <p class="text-md opacity-80">
+                    Email: <a href="mailto:iusafrica2@gmail.com" class="underline hover:no-underline">iusafrica2@gmail.com</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const splashScreen = document.getElementById('splash-screen');
+            const mainContentWrapper = document.getElementById('main-content-wrapper');
+
+            // Hide splash screen and show main content after 5 seconds
+            setTimeout(() => {
+                splashScreen.classList.add('fade-out');
+                // After the fade-out transition completes, hide the splash screen entirely
+                splashScreen.addEventListener('transitionend', () => {
+                    splashScreen.style.display = 'none';
+                    mainContentWrapper.classList.add('visible');
+                    document.body.style.overflow = 'auto'; // Re-enable scrolling
+                }, { once: true }); // Ensure this listener runs only once
+            }, 5000); // 5000 milliseconds = 5 seconds
+        });
+    </script>
+</body>
+</html>

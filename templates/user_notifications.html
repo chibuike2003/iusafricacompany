@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Notifications - Ius Africa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #008080, #005f5f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .notification-item {
+            border-left: 5px solid;
+            transition: background-color 0.3s ease;
+        }
+        .notification-unread {
+            border-color: #008080; /* Teal for unread */
+            background-color: #e0f2f2; /* Lighter teal background */
+        }
+        .notification-read {
+            border-color: #cbd5e0; /* Gray for read */
+            background-color: #f0f4f8; /* Very light gray background */
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <header class="header-gradient-bg text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center md:space-y-0 space-y-4">
+            <div class="flex items-center space-x-4">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="w-10 h-10 rounded-full shadow-md">
+                <h1 class="text-2xl font-bold">Ius Africa</h1>
+            </div>
+            <nav class="flex flex-wrap justify-center items-center space-x-2 md:space-x-4">
+                <a href="{{ url_for('user_dashboard') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Dashboard <i class="fas fa-tachometer-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_all_blog_posts') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Blog Posts <i class="fas fa-blog ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_all_testimonials') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Testimonials <i class="fas fa-quote-right ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_notifications') }}" class="text-white bg-teal-700 px-3 py-2 rounded-md border border-white my-1 md:my-0">
+                    Notifications 
+                    {% set unread_count = notifications | selectattr('is_read', '==', false) | list | length %}
+                    {% if unread_count > 0 %}
+                        <span class="ml-1 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full">{{ unread_count }}</span>
+                    {% endif %}
+                    <i class="fas fa-bell ml-1"></i>
+                </a>
+                {% if session.get('user_logged_in') %}
+                <span class="text-white text-lg font-medium mr-2 md:mr-0">Welcome, {{ session.get('user_name', 'User') }}!</span>
+                <a href="{{ url_for('user_logout') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Logout <i class="fas fa-sign-out-alt ml-1"></i>
+                </a>
+                {% else %}
+                <a href="{{ url_for('user_login') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Login <i class="fas fa-sign-in-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_signup') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Sign Up <i class="fas fa-user-plus ml-1"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-md text-sm {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section id="user-notifications" class="mb-8 md:mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gradient">Your Notifications</h2>
+            <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                {% if notifications %}
+                    <div class="space-y-4">
+                        {% for notification in notifications %}
+                            <div id="notification-{{ notification.id }}" class="notification-item p-4 rounded-lg shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center 
+                                {% if notification.is_read %}notification-read{% else %}notification-unread{% endif %}">
+                                <div class="flex-grow mb-2 md:mb-0">
+                                    <h3 class="text-lg font-semibold text-gray-800">{{ notification.subject }}</h3>
+                                    <p class="text-gray-700 text-sm">{{ notification.message }}</p>
+                                    <p class="text-gray-500 text-xs mt-1">Received: {{ notification.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                </div>
+                                {% if not notification.is_read %}
+                                <button class="mark-as-read-btn bg-teal-500 text-white px-3 py-1 rounded-full text-xs hover:bg-teal-600 transition-colors duration-200 mt-2 md:mt-0 md:ml-4" 
+                                        data-notification-id="{{ notification.id }}">
+                                    Mark as Read
+                                </button>
+                                {% else %}
+                                <span class="text-gray-500 text-xs italic mt-2 md:mt-0 md:ml-4">Read</span>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-gray-600 py-8">You have no notifications at the moment.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="header-gradient-bg text-white py-6 mt-12 shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+            <div class="flex justify-center space-x-6 mb-2">
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-facebook-f text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-linkedin-in text-2xl"></i>
+                </a>
+                <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-envelope text-2xl"></i>
+                </a>
+            </div>
+            <p class="text-md opacity-80">
+                Email: <a href="mailto:iusafrica2@gmail.com" class="underline hover:no-underline">iusafrica2@gmail.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const markAsReadButtons = document.querySelectorAll('.mark-as-read-btn');
+
+            markAsReadButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const notificationId = this.dataset.notificationId;
+                    const notificationElement = document.getElementById(`notification-${notificationId}`);
+
+                    fetch(`/user/mark_notification_read/${notificationId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update UI: change class and remove button
+                            notificationElement.classList.remove('notification-unread');
+                            notificationElement.classList.add('notification-read');
+                            this.remove(); // Remove the "Mark as Read" button
+                            
+                            // Add "Read" status text
+                            const statusSpan = document.createElement('span');
+                            statusSpan.classList.add('text-gray-500', 'text-xs', 'italic', 'mt-2', 'md:mt-0', 'md:ml-4');
+                            statusSpan.textContent = 'Read';
+                            notificationElement.appendChild(statusSpan);
+
+                            // Optionally update the unread count in the header
+                            // This would require a more complex client-side update or a page reload
+                            // For now, it will update on page reload.
+                        } else {
+                            console.error('Failed to mark notification as read:', data.message);
+                            alert('Failed to mark notification as read. Please try again.'); // Using alert for simplicity, consider a custom modal
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while marking notification as read.'); // Using alert for simplicity
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

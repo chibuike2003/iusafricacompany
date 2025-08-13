@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Event Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .table-card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .modal-content {
+            background-color: #fff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 90%;
+            max-width: 600px; /* Increased max-width for forms with images/videos */
+            padding: 1.5rem;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Header Section -->
+    <header class="header-gradient-bg text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('admin_dashboard') }}" class="flex items-center space-x-4">
+                    <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="w-10 h-10 rounded-full shadow-md">
+                    <h1 class="text-2xl font-bold">Ius Africa Admin</h1>
+                </a>
+            </div>
+            <nav class="flex items-center space-x-4">
+                <span class="text-white text-lg font-medium">Welcome, {{ admin_name }}!</span>
+                <a href="{{ url_for('admin_dashboard') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md">Dashboard</a>
+                <a href="{{ url_for('admin_content_management') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md">Content Management</a>
+                <a href="{{ url_for('admin_events') }}" class="text-white bg-teal-700 px-3 py-2 rounded-md border border-white">Event Management</a>
+                <a href="{{ url_for('admin_logout') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600">
+                    Logout <i class="fas fa-sign-out-alt ml-1"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-md text-sm {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <h2 class="text-4xl font-extrabold text-center mb-10 text-teal-800">Event Management</h2>
+
+        <div class="flex justify-end mb-6">
+            <button id="add-event-btn" class="bg-teal-600 text-white py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 flex items-center justify-center text-sm md:text-base">
+                <i class="fas fa-plus mr-2"></i> Add New Event
+            </button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl table-card-shadow border border-gray-100 overflow-x-auto">
+            {% if events %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video Link</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Published</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for event in events %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ event.id }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ event.title }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ event.event_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {% if event.image_filename %}
+                                <img src="{{ url_for('static', filename='event_images/' + event.image_filename) }}" alt="Event Image" class="h-12 w-12 object-cover rounded-md">
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-700 max-w-xs overflow-hidden text-ellipsis">
+                            {% if event.video_link %}
+                                <a href="{{ event.video_link }}" target="_blank" class="text-teal-600 hover:underline">View Video</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {% if event.is_published %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Yes</span>
+                            {% else %}
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="openEditEventModal(
+                                {{ event.id }},
+                                '{{ event.title | e }}',
+                                '{{ event.description | e }}',
+                                '{{ event.event_date.strftime('%Y-%m-%dT%H:%M') }}',
+                                '{{ event.image_filename | default('') }}',
+                                '{{ event.video_link | default('') }}',
+                                {{ 'true' if event.is_published else 'false' }}
+                            )" class="text-indigo-600 hover:text-indigo-900 mr-3">
+                                Edit <i class="fas fa-edit"></i>
+                            </button>
+                            <form action="{{ url_for('admin_delete_event', event_id=event.id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this event? This action cannot be undone.');">
+                                <button type="submit" class="text-red-600 hover:text-red-900">
+                                    Delete <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-center text-gray-600 py-4">No events added yet.</p>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="header-gradient-bg text-white py-6 mt-auto shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+            <div class="flex justify-center space-x-6 mb-2">
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-facebook-f text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-linkedin-in text-2xl"></i>
+                </a>
+                <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-envelope text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Add Event Modal -->
+    <div id="addEventModal" class="fixed inset-0 hidden modal-overlay">
+        <div class="relative w-full p-6 modal-content">
+            <button id="closeAddEventModalBtn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-2xl font-bold text-center mb-6 text-teal-700">Add New Event</h3>
+            <form id="addEventForm" method="POST" action="{{ url_for('admin_add_event') }}" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label for="add-title" class="block text-gray-700 text-sm font-semibold mb-2">Event Title</label>
+                    <input type="text" id="add-title" name="title" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="add-description" class="block text-gray-700 text-sm font-semibold mb-2">Description</label>
+                    <textarea id="add-description" name="description" rows="4" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="add-event-date" class="block text-gray-700 text-sm font-semibold mb-2">Event Date & Time</label>
+                    <input type="datetime-local" id="add-event-date" name="event_date" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="add-image-file" class="block text-gray-700 text-sm font-semibold mb-2">Event Image</label>
+                    <input type="file" id="add-image-file" name="image_file" accept="image/*" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500">
+                    <p class="text-xs text-gray-500 mt-1">Accepted formats: PNG, JPG, JPEG, GIF</p>
+                </div>
+                <div class="mb-4">
+                    <label for="add-video-link" class="block text-gray-700 text-sm font-semibold mb-2">Video Link (e.g., YouTube)</label>
+                    <input type="url" id="add-video-link" name="video_link" placeholder="https://www.youtube.com/watch?v=..." class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500">
+                </div>
+                <div class="mb-6 flex items-center">
+                    <input type="checkbox" id="add-is-published" name="is_published" class="mr-2 h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
+                    <label for="add-is-published" class="text-gray-700 text-sm font-semibold">Publish Event</label>
+                </div>
+                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 focus:outline-none focus:shadow-outline">
+                    Add Event <i class="fas fa-plus ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div id="editEventModal" class="fixed inset-0 hidden modal-overlay">
+        <div class="relative w-full p-6 modal-content">
+            <button id="closeEditEventModalBtn" class="absolute top-4 right-4 text-gray-600 hover:text-gray-900 text-2xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 class="text-2xl font-bold text-center mb-6 text-teal-700">Edit Event</h3>
+            <form id="editEventForm" method="POST" action="" enctype="multipart/form-data">
+                <input type="hidden" id="edit-event-id" name="event_id">
+                <div class="mb-4">
+                    <label for="edit-title" class="block text-gray-700 text-sm font-semibold mb-2">Event Title</label>
+                    <input type="text" id="edit-title" name="title" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-description" class="block text-gray-700 text-sm font-semibold mb-2">Description</label>
+                    <textarea id="edit-description" name="description" rows="4" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-event-date" class="block text-gray-700 text-sm font-semibold mb-2">Event Date & Time</label>
+                    <input type="datetime-local" id="edit-event-date" name="event_date" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-semibold mb-2">Current Event Image</label>
+                    <div id="current-image-preview" class="mb-2">
+                        <!-- Image will be loaded here by JS -->
+                    </div>
+                    <div class="flex items-center mb-2">
+                        <input type="checkbox" id="remove-current-image" name="remove_current_image" class="mr-2 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                        <label for="remove-current-image" class="text-gray-700 text-sm font-semibold">Remove Current Image</label>
+                    </div>
+                    <label for="edit-image-file" class="block text-gray-700 text-sm font-semibold mb-2">Upload New Event Image</label>
+                    <input type="file" id="edit-image-file" name="image_file" accept="image/*" class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500">
+                    <p class="text-xs text-gray-500 mt-1">Accepted formats: PNG, JPG, JPEG, GIF</p>
+                </div>
+                <div class="mb-4">
+                    <label for="edit-video-link" class="block text-gray-700 text-sm font-semibold mb-2">Video Link (e.g., YouTube)</label>
+                    <input type="url" id="edit-video-link" name="video_link" placeholder="https://www.youtube.com/watch?v=..." class="shadow-sm appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-teal-500">
+                </div>
+                <div class="mb-6 flex items-center">
+                    <input type="checkbox" id="edit-is-published" name="is_published" class="mr-2 h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
+                    <label for="edit-is-published" class="text-gray-700 text-sm font-semibold">Publish Event</label>
+                </div>
+                <button type="submit" class="w-full bg-teal-600 text-white font-bold py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 focus:outline-none focus:shadow-outline">
+                    Update Event <i class="fas fa-save ml-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const addEventBtn = document.getElementById('add-event-btn');
+            const addEventModal = document.getElementById('addEventModal');
+            const closeAddEventModalBtn = document.getElementById('closeAddEventModalBtn');
+            const addEventForm = document.getElementById('addEventForm');
+
+            const editEventModal = document.getElementById('editEventModal');
+            const closeEditEventModalBtn = document.getElementById('closeEditEventModalBtn');
+            const editEventForm = document.getElementById('editEventForm');
+            const currentImagePreview = document.getElementById('current-image-preview');
+            const removeCurrentImageCheckbox = document.getElementById('remove-current-image');
+
+
+            // Open Add Event modal
+            addEventBtn.addEventListener('click', () => {
+                addEventModal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+                addEventForm.reset(); // Clear form fields
+                // Reset checkbox state
+                document.getElementById('add-is-published').checked = true;
+            });
+
+            // Close Add Event modal
+            closeAddEventModalBtn.addEventListener('click', () => {
+                addEventModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            });
+
+            // Open Edit Event modal
+            window.openEditEventModal = (id, title, description, eventDate, imageFilename, videoLink, isPublished) => {
+                document.getElementById('edit-event-id').value = id;
+                document.getElementById('edit-title').value = title;
+                document.getElementById('edit-description').value = description;
+                document.getElementById('edit-event-date').value = eventDate; // This should be in YYYY-MM-DDTHH:MM format
+                document.getElementById('edit-video-link').value = videoLink;
+                document.getElementById('edit-is-published').checked = isPublished;
+
+                // Clear previous image preview and reset checkbox
+                currentImagePreview.innerHTML = '';
+                removeCurrentImageCheckbox.checked = false;
+
+                if (imageFilename) {
+                    const img = document.createElement('img');
+                    img.src = "{{ url_for('static', filename='event_images/') }}" + imageFilename;
+                    img.alt = "Current Event Image";
+                    img.className = "w-24 h-24 object-cover rounded-md mb-2";
+                    currentImagePreview.appendChild(img);
+                } else {
+                    currentImagePreview.innerHTML = '<p class="text-gray-500 text-sm">No current image.</p>';
+                }
+
+                editEventForm.action = "{{ url_for('admin_edit_event', event_id=0) }}".replace('0', id);
+                editEventModal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            };
+
+            // Close Edit Event modal
+            closeEditEventModalBtn.addEventListener('click', () => {
+                editEventModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                editEventForm.reset(); // Clear form fields
+            });
+        });
+    </script>
+</body>
+</html>

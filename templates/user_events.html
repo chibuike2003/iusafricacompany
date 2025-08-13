@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Events - Ius Africa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #008080, #005f5f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .event-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <header class="header-gradient-bg text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center md:space-y-0 space-y-4">
+            <div class="flex items-center space-x-4">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="w-10 h-10 rounded-full shadow-md">
+                <h1 class="text-2xl font-bold">Ius Africa</h1>
+            </div>
+            <nav class="flex flex-wrap justify-center items-center space-x-2 md:space-x-4">
+                <a href="{{ url_for('user_dashboard') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Dashboard <i class="fas fa-tachometer-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_announcements') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Announcements <i class="fas fa-bullhorn ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_opportunities') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Opportunities <i class="fas fa-hands-helping ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_resources') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Resources <i class="fas fa-book-open ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_events') }}" class="text-white bg-teal-700 px-3 py-2 rounded-md border border-white my-1 md:my-0">
+                    Events <i class="fas fa-calendar-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_logout') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Logout <i class="fas fa-sign-out-alt ml-1"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-md text-sm {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section id="user-events" class="mb-8 md:mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gradient">Upcoming & Past Events</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% if events %}
+                    {% for event in events %}
+                        <div class="event-card bg-white p-6 rounded-xl card-shadow border border-gray-100 flex flex-col">
+                            {% if event.image_filename %}
+                                <img src="{{ url_for('static', filename='event_images/' + event.image_filename) }}" alt="Event Image" class="w-full h-48 object-cover rounded-md mb-4">
+                            {% else %}
+                                <div class="w-full h-48 bg-gray-200 flex items-center justify-center rounded-md mb-4 text-gray-500">
+                                    <i class="fas fa-image text-5xl"></i>
+                                </div>
+                            {% endif %}
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-2">{{ event.title }}</h3>
+                            <p class="text-gray-600 text-sm mb-3"><i class="fas fa-calendar-alt mr-2"></i>{{ event.event_date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            <p class="text-gray-700 text-base mb-4 flex-grow">{{ event.description or 'No description provided.' }}</p>
+                            
+                            {% if event.video_link %}
+                                <a href="{{ event.video_link }}" target="_blank" class="bg-teal-600 text-white py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300 text-center mt-auto">
+                                    Watch Video <i class="fas fa-play-circle ml-2"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-center text-gray-600 py-8 col-span-full">No events available at the moment.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="header-gradient-bg text-white py-6 mt-12 shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+            <div class="flex justify-center space-x-6 mb-2">
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-facebook-f text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-linkedin-in text-2xl"></i>
+                </a>
+                <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-envelope text-2xl"></i>
+                </a>
+            </div>
+            <p class="text-md opacity-80">
+                Email: <a href="mailto:iusafrica2@gmail.com" class="underline hover:no-underline">iusafrica2@gmail.com</a>
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

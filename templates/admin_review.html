@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Content Review - Ius Africa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #008080, #005f5f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <header class="header-gradient-bg text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center md:space-y-0 space-y-4">
+            <div class="flex items-center space-x-4">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="w-10 h-10 rounded-full shadow-md">
+                <h1 class="text-2xl font-bold">Ius Africa Admin</h1>
+            </div>
+            <nav class="flex flex-wrap justify-center items-center space-x-2 md:space-x-4">
+                <span class="text-white text-lg font-medium mr-2 md:mr-0">Welcome, {{ admin_name }}!</span>
+                <a href="{{ url_for('admin_dashboard') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Dashboard <i class="fas fa-tachometer-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('admin_onboarding') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Onboarding <i class="fas fa-user-plus ml-1"></i>
+                </a>
+                <a href="{{ url_for('admin_user_details') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Manage Users <i class="fas fa-users ml-1"></i>
+                </a>
+                <a href="{{ url_for('admin_communication_tools') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Communication <i class="fas fa-paper-plane ml-1"></i>
+                </a>
+                <a href="{{ url_for('admin_review_content') }}" class="text-white bg-teal-700 px-3 py-2 rounded-md border border-white my-1 md:my-0">
+                    Review Content <i class="fas fa-check-double ml-1"></i>
+                </a>
+                <a href="{{ url_for('admin_logs') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Activity Logs <i class="fas fa-history ml-1"></i>
+                </a>
+                <a href="{{ url_for('admin_logout') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Logout <i class="fas fa-sign-out-alt ml-1"></i>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-md text-sm {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section id="content-review" class="mb-8 md:mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gradient">Content Review Dashboard</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Pending Testimonials Section -->
+                <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Pending Testimonials ({{ pending_testimonials|length }})</h3>
+                    {% if pending_testimonials %}
+                        {% for testimonial in pending_testimonials %}
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0">
+                                <p class="text-gray-700 text-lg italic mb-2">"{{ testimonial.testimonial_text }}"</p>
+                                <p class="text-gray-600 text-sm mb-3">By: <span class="font-medium">{{ testimonial.user_name }}</span> (ID: {{ testimonial.user_id }})</p>
+                                <p class="text-gray-600 text-xs">Submitted: {{ testimonial.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <div class="mt-4 flex space-x-3">
+                                    <form action="{{ url_for('admin_approve_testimonial', testimonial_id=testimonial.id) }}" method="POST">
+                                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-check mr-2"></i> Approve
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin_reject_testimonial', testimonial_id=testimonial.id) }}" method="POST">
+                                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-times mr-2"></i> Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-4">No pending testimonials to review.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Pending Blog Posts Section -->
+                <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Pending Blog Posts ({{ pending_blog_posts|length }})</h3>
+                    {% if pending_blog_posts %}
+                        {% for post in pending_blog_posts %}
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0">
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">{{ post.title }}</h4>
+                                <p class="text-gray-700 mb-2">{{ post.content[:200] }}...</p>
+                                <p class="text-gray-600 text-sm mb-3">By: <span class="font-medium">{{ post.user_name }}</span> (ID: {{ post.user_id }})</p>
+                                <p class="text-gray-600 text-xs">Created: {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <div class="mt-4 flex space-x-3">
+                                    <form action="{{ url_for('admin_approve_blog_post', post_id=post.id) }}" method="POST">
+                                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-check mr-2"></i> Publish
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin_reject_blog_post', post_id=post.id) }}" method="POST">
+                                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-times mr-2"></i> Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-4">No pending blog posts to review.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Approved/Published Content Section -->
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Approved Testimonials -->
+                <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Approved Testimonials ({{ approved_testimonials|length }})</h3>
+                    {% if approved_testimonials %}
+                        {% for testimonial in approved_testimonials %}
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0 bg-green-50">
+                                <p class="text-gray-700 text-lg italic mb-2">"{{ testimonial.testimonial_text }}"</p>
+                                <p class="text-gray-600 text-sm mb-3">By: <span class="font-medium">{{ testimonial.user_name }}</span> (ID: {{ testimonial.user_id }})</p>
+                                <p class="text-gray-600 text-xs">Approved: {{ testimonial.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <div class="mt-4 flex space-x-3">
+                                    <form action="{{ url_for('admin_reject_testimonial', testimonial_id=testimonial.id) }}" method="POST">
+                                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-times mr-2"></i> Unapprove
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-4">No approved testimonials.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Published Blog Posts -->
+                <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Published Blog Posts ({{ published_blog_posts|length }})</h3>
+                    {% if published_blog_posts %}
+                        {% for post in published_blog_posts %}
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0 bg-green-50">
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">{{ post.title }}</h4>
+                                <p class="text-gray-700 mb-2">{{ post.content[:200] }}...</p>
+                                <p class="text-gray-600 text-sm mb-3">By: <span class="font-medium">{{ post.user_name }}</span> (ID: {{ post.user_id }})</p>
+                                <p class="text-gray-600 text-xs">Published: {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <div class="mt-4 flex space-x-3">
+                                    <form action="{{ url_for('admin_reject_blog_post', post_id=post.id) }}" method="POST">
+                                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-times mr-2"></i> Unpublish
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-4">No published blog posts.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Rejected Content Section -->
+            <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Rejected Testimonials -->
+                <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Rejected Testimonials ({{ rejected_testimonials|length }})</h3>
+                    {% if rejected_testimonials %}
+                        {% for testimonial in rejected_testimonials %}
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0 bg-red-50">
+                                <p class="text-gray-700 text-lg italic mb-2">"{{ testimonial.testimonial_text }}"</p>
+                                <p class="text-gray-600 text-sm mb-3">By: <span class="font-medium">{{ testimonial.user_name }}</span> (ID: {{ testimonial.user_id }})</p>
+                                <p class="text-gray-600 text-xs">Rejected: {{ testimonial.submitted_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <div class="mt-4 flex space-x-3">
+                                    <form action="{{ url_for('admin_approve_testimonial', testimonial_id=testimonial.id) }}" method="POST">
+                                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-check mr-2"></i> Re-approve
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin_delete_testimonial', testimonial_id=testimonial.id) }}" method="POST">
+                                        <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-full hover:bg-gray-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-trash-alt mr-2"></i> Delete Permanently
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-4">No rejected testimonials.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Rejected Blog Posts -->
+                <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Rejected Blog Posts ({{ rejected_blog_posts|length }})</h3>
+                    {% if rejected_blog_posts %}
+                        {% for post in rejected_blog_posts %}
+                            <div class="border border-gray-200 rounded-lg p-4 mb-4 last:mb-0 bg-red-50">
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">{{ post.title }}</h4>
+                                <p class="text-gray-700 mb-2">{{ post.content[:200] }}...</p>
+                                <p class="text-gray-600 text-sm mb-3">By: <span class="font-medium">{{ post.user_name }}</span> (ID: {{ post.user_id }})</p>
+                                <p class="text-gray-600 text-xs">Rejected: {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                <div class="mt-4 flex space-x-3">
+                                    <form action="{{ url_for('admin_approve_blog_post', post_id=post.id) }}" method="POST">
+                                        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-full hover:bg-green-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-check mr-2"></i> Re-publish
+                                        </button>
+                                    </form>
+                                    <form action="{{ url_for('admin_delete_blog_post', post_id=post.id) }}" method="POST">
+                                        <button type="submit" class="bg-gray-500 text-white px-4 py-2 rounded-full hover:bg-gray-600 transition-colors duration-300 flex items-center">
+                                            <i class="fas fa-trash-alt mr-2"></i> Delete Permanently
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-600 text-center py-4">No rejected blog posts.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="header-gradient-bg text-white py-6 mt-12 shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+            <div class="flex justify-center space-x-6 mb-2">
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-facebook-f text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-linkedin-in text-2xl"></i>
+                </a>
+                <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-envelope text-2xl"></i>
+                </a>
+            </div>
+            <p class="text-md opacity-80">
+                Email: <a href="mailto:iusafrica2@gmail.com" class="underline hover:no-underline">iusafrica2@gmail.com</a>
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Blog Posts - Ius Africa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            color: #1a202c; /* Dark text for contrast */
+        }
+        .header-gradient-bg {
+            background: linear-gradient(to right, #008080, #005f5f); /* Teal to darker teal gradient */
+        }
+        .card-shadow {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #008080, #005f5f);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Modal Styles */
+        .modal {
+            transition: opacity 0.3s ease-out;
+            opacity: 0;
+        }
+        .modal.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <header class="header-gradient-bg text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center md:space-y-0 space-y-4">
+            <div class="flex items-center space-x-4">
+                <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Ius Africa Logo" class="w-10 h-10 rounded-full shadow-md">
+                <h1 class="text-2xl font-bold">Ius Africa</h1>
+            </div>
+            <nav class="flex flex-wrap justify-center items-center space-x-2 md:space-x-4">
+                <a href="{{ url_for('user_dashboard') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Dashboard <i class="fas fa-tachometer-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_all_blog_posts') }}" class="text-white bg-teal-700 px-3 py-2 rounded-md border border-white my-1 md:my-0">
+                    Blog Posts <i class="fas fa-blog ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_all_testimonials') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Testimonials <i class="fas fa-quote-right ml-1"></i>
+                </a>
+                {% if session.get('user_logged_in') %}
+                <span class="text-white text-lg font-medium mr-2 md:mr-0">Welcome, {{ session.get('user_name', 'User') }}!</span>
+                <a href="{{ url_for('user_logout') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Logout <i class="fas fa-sign-out-alt ml-1"></i>
+                </a>
+                {% else %}
+                <a href="{{ url_for('user_login') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Login <i class="fas fa-sign-in-alt ml-1"></i>
+                </a>
+                <a href="{{ url_for('user_signup') }}" class="text-white hover:text-gray-200 transition-colors duration-300 px-3 py-2 rounded-md border border-white hover:bg-white hover:text-teal-600 my-1 md:my-0">
+                    Sign Up <i class="fas fa-user-plus ml-1"></i>
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-md text-sm {% if category == 'error' %}bg-red-100 text-red-700{% elif category == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section id="all-blog-posts" class="mb-8 md:mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold text-center mb-6 text-gradient">Our Latest Insights & Articles</h2>
+            <div class="bg-white p-6 md:p-8 rounded-xl card-shadow border border-gray-100">
+                {% if blog_posts %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for post in blog_posts %}
+                            <div class="border border-gray-200 rounded-lg p-5 flex flex-col justify-between h-full">
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ post.title }}</h3>
+                                    <p class="text-gray-600 text-sm mb-3">By {{ post.user_name }} on {{ post.created_at.strftime('%B %d, %Y') }}</p>
+                                    <p class="text-gray-700 mb-4">{{ post.content[:250] }}...</p>
+                                </div>
+                                <div class="mt-auto">
+                                    <button class="text-teal-500 hover:underline text-sm read-more-btn" data-post-id="{{ post.id }}">Read More <i class="fas fa-arrow-right ml-1"></i></button>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-center text-gray-600 py-8">No blog posts published yet. Check back soon!</p>
+                    {% if session.get('user_logged_in') %}
+                    <div class="text-center mt-6">
+                        <button id="createBlogPostBtn" class="bg-teal-600 text-white py-2 px-4 rounded-full hover:bg-teal-700 transition-colors duration-300">
+                            Create Your Own Post <i class="fas fa-plus ml-2"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </section>
+    </main>
+
+    <footer class="header-gradient-bg text-white py-6 mt-12 shadow-inner">
+        <div class="container mx-auto px-4 text-center">
+            <p class="mb-4 text-lg">&copy; 2025 Ius Africa. All rights reserved.</p>
+            <div class="flex justify-center space-x-6 mb-2">
+                <a href="https://www.facebook.com/profile.php?id=61565971682688" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-facebook-f text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/company/105226035/admin/dashboard/" target="_blank" rel="noopener noreferrer" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fab fa-linkedin-in text-2xl"></i>
+                </a>
+                <a href="mailto:iusafrica2@gmail.com" class="text-white hover:text-gray-200 transition-colors duration-300">
+                    <i class="fas fa-envelope text-2xl"></i>
+                </a>
+            </div>
+            <p class="text-md opacity-80">
+                Email: <a href="mailto:iusafrica2@gmail.com" class="underline hover:no-underline">iusafrica2@gmail.com</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Blog Post Modal (Copied from user_dashboard.html) -->
+    <div id="createBlogPostModal" class="modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-11/12 md:w-1/2 lg:w-2/3 relative">
+            <button class="close-modal-btn absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-2xl focus:outline-none" data-modal="createBlogPostModal">
+                &times;
+            </button>
+            <h2 class="text-2xl font-bold text-teal-600 mb-6 text-center">Create New Blog Post</h2>
+            <form id="blogPostForm" method="POST" action="{{ url_for('user_create_blog_post') }}">
+                <div class="mb-4">
+                    <label for="blog_title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
+                    <input type="text" id="blog_title" name="blog_title" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-teal-500" placeholder="Your amazing blog post title" required>
+                </div>
+                <div class="mb-6">
+                    <label for="blog_content" class="block text-gray-700 text-sm font-bold mb-2">Content</label>
+                    <textarea id="blog_content" name="blog_content" rows="10" class="w-full p-2 border rounded-md focus:ring-teal-500 focus:border-teal-500" placeholder="Write your blog post content here..." required></textarea>
+                </div>
+                <div class="flex justify-end">
+                    <button type="submit" class="bg-teal-600 text-white font-bold py-2 px-4 rounded-full hover:bg-teal-700 focus:outline-none focus:shadow-outline transition-colors duration-300">
+                        Submit Post for Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Single Blog Post View Modal -->
+    <div id="viewBlogPostModal" class="modal fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-11/12 md:w-3/4 lg:w-2/3 max-h-[90vh] overflow-y-auto relative">
+            <button class="close-modal-btn absolute top-3 right-3 text-gray-600 hover:text-gray-900 text-2xl focus:outline-none" data-modal="viewBlogPostModal">
+                &times;
+            </button>
+            <div id="blogPostContent">
+                <!-- Blog post and comments will be loaded here via AJAX -->
+                <p class="text-center text-gray-500">Loading blog post...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const createBlogPostBtn = document.getElementById('createBlogPostBtn');
+            const createBlogPostModal = document.getElementById('createBlogPostModal');
+            const viewBlogPostModal = document.getElementById('viewBlogPostModal');
+            const blogPostContentDiv = document.getElementById('blogPostContent');
+            const closeModalBtns = document.querySelectorAll('.close-modal-btn');
+            const readMoreBtns = document.querySelectorAll('.read-more-btn');
+
+            function openModal(modalElement) {
+                modalElement.classList.remove('hidden');
+                setTimeout(() => modalElement.classList.add('show'), 10); // Add 'show' for opacity transition
+            }
+
+            function closeModal(modalElement) {
+                modalElement.classList.remove('show'); // Remove 'show' to trigger fade out
+                setTimeout(() => modalElement.classList.add('hidden'), 300); // Hide after transition
+            }
+
+            if (createBlogPostBtn) { // Check if the button exists (only for logged-in users)
+                createBlogPostBtn.addEventListener('click', function() {
+                    openModal(createBlogPostModal);
+                });
+            }
+
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modalId = this.dataset.modal;
+                    const modalElement = document.getElementById(modalId);
+                    closeModal(modalElement);
+                });
+            });
+
+            // Close modals when clicking outside the content
+            createBlogPostModal.addEventListener('click', function(e) {
+                if (e.target === createBlogPostModal) {
+                    closeModal(createBlogPostModal);
+                }
+            });
+            viewBlogPostModal.addEventListener('click', function(e) {
+                if (e.target === viewBlogPostModal) {
+                    closeModal(viewBlogPostModal);
+                }
+            });
+
+            // Close modals on Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    if (!createBlogPostModal.classList.contains('hidden')) {
+                        closeModal(createBlogPostModal);
+                    }
+                    if (!viewBlogPostModal.classList.contains('hidden')) {
+                        closeModal(viewBlogPostModal);
+                    }
+                }
+            });
+
+            // Handle blog post submission form validation
+            document.getElementById('blogPostForm').addEventListener('submit', function(event) {
+                const blogTitle = document.getElementById('blog_title').value.trim();
+                const blogContent = document.getElementById('blog_content').value.trim();
+                if (blogTitle === '' || blogContent === '') {
+                    console.error('Blog post title and content cannot be empty.');
+                    event.preventDefault();
+                }
+            });
+
+            // Handle "Read More" button clicks to open blog post modal
+            readMoreBtns.forEach(button => {
+                button.addEventListener('click', function() {
+                    const postId = this.dataset.postId;
+                    blogPostContentDiv.innerHTML = '<p class="text-center text-gray-500 py-8">Loading blog post...</p>'; // Show loading
+                    openModal(viewBlogPostModal);
+
+                    // Fetch blog post content via AJAX
+                    fetch(`/user/blog_post/${postId}`)
+                        .then(response => response.text())
+                        .then(html => {
+                            blogPostContentDiv.innerHTML = html;
+                            // Re-attach event listeners for reply buttons after content is loaded
+                            attachReplyFormToggleListeners();
+                        })
+                        .catch(error => {
+                            console.error('Error fetching blog post:', error);
+                            blogPostContentDiv.innerHTML = '<p class="text-center text-red-500 py-8">Failed to load blog post. Please try again.</p>';
+                        });
+                });
+            });
+
+            // Function to attach event listeners to reply buttons
+            function attachReplyFormToggleListeners() {
+                document.querySelectorAll('.toggle-reply-form').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const commentId = this.dataset.commentId;
+                        const replyForm = document.getElementById(`reply-form-${commentId}`);
+                        if (replyForm) {
+                            replyForm.classList.toggle('hidden');
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
